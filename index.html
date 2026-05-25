@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Avellaneda–Stoikov, in a sandbox · microprice-sandbox</title>
+<meta name="description" content="Reproducing the Sasson–Ho–Samson HFT paper inside a fresh Islo sandbox. The market-maker that knows when it is long.">
+<meta property="og:title" content="Avellaneda–Stoikov, in a sandbox">
+<meta property="og:description" content="The market-maker that knows when it is long. One-liner reproduction of an HFT paper in an ephemeral Linux sandbox.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+<style>
+:root{
+  --ink:#161311;
+  --paper:#fbf7ee;
+  --muted:#6a5f55;
+  --rule:#d9cdb7;
+  --accent:#b14a2a;
+  --tide:#1a5670;
+  --code-bg:#181613;
+  --code-fg:#f1e9d8;
+  --tag-bg:#ece1c9;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink)}
+body{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:17px;line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:
+    radial-gradient(circle at 14% 6%, rgba(177,74,42,.05), transparent 40%),
+    radial-gradient(circle at 92% 92%, rgba(26,86,112,.06), transparent 38%);
+}
+main{max-width:740px;margin:0 auto;padding:64px 28px 96px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:18px;
+}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+h1{
+  font-family:"Fraunces",Georgia,serif;
+  font-weight:600;font-size:clamp(36px,5vw,52px);line-height:1.05;
+  letter-spacing:-.015em;margin:0 0 14px;
+}
+h1 .amp{color:var(--accent);font-style:italic;font-weight:500}
+.sub{
+  font-family:"Fraunces",Georgia,serif;font-weight:500;
+  font-size:21px;line-height:1.35;color:var(--muted);
+  margin:0 0 38px;font-style:italic;max-width:620px;
+}
+.lede{font-size:18px;line-height:1.65;margin:0 0 28px}
+.lede strong{font-weight:600}
+
+h2{
+  font-family:"Fraunces",Georgia,serif;
+  font-weight:600;font-size:26px;line-height:1.2;letter-spacing:-.01em;
+  margin:56px 0 14px;
+}
+h2 .num{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:13px;color:var(--accent);letter-spacing:.04em;
+  display:block;margin-bottom:4px;font-weight:500;
+}
+h3{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:19px;margin:30px 0 8px}
+p{margin:0 0 16px}
+a{color:var(--tide);text-underline-offset:.18em;text-decoration-thickness:.06em}
+a:hover{color:var(--accent)}
+
+.pullquote{
+  margin:32px 0;padding:18px 22px;
+  border-left:3px solid var(--accent);background:#f4ecd9;
+  font-family:"Fraunces",Georgia,serif;font-size:18px;line-height:1.5;
+}
+
+.copy{
+  position:relative;margin:24px 0 36px;
+  background:var(--code-bg);color:var(--code-fg);
+  border-radius:8px;font-family:"IBM Plex Mono",monospace;font-size:13.5px;
+  box-shadow:0 12px 28px -16px rgba(22,19,17,.4);
+  overflow:hidden;
+}
+.copy-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 14px;background:rgba(255,255,255,.04);
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:#a89c89;
+}
+.copy-btn{
+  cursor:pointer;border:0;background:transparent;color:#d8c79f;
+  font:inherit;letter-spacing:.1em;padding:2px 8px;border-radius:4px;
+}
+.copy-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+.copy-btn.ok{color:#9ccaa3}
+.copy pre{margin:0;padding:16px 18px 18px;overflow-x:auto;line-height:1.55}
+.copy code{color:inherit}
+.copy .c{color:#928670}
+.copy .y{color:#e4c578}
+.copy .r{color:#e98e6e}
+
+figure{margin:28px 0;padding:0}
+figure img{display:block;width:100%;height:auto;border-radius:6px;
+  border:1px solid var(--rule);background:#fff}
+figcaption{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+figcaption .fname{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--accent)}
+
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin:18px 0 28px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left}
+thead th{
+  font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:11.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  border-bottom:1.5px solid var(--ink);
+}
+tbody tr.as td{font-weight:500}
+tbody tr.ctl td{color:var(--muted)}
+.delta{color:var(--accent);font-weight:500}
+
+.eqn{font-family:"KaTeX_Main",serif;background:#f4ecd9;padding:10px 14px;
+  border-radius:6px;margin:14px 0;font-size:15.5px;overflow-x:auto}
+.kbd{
+  font-family:"IBM Plex Mono",monospace;font-size:13px;
+  background:var(--tag-bg);padding:1px 6px;border-radius:4px;
+}
+
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0 36px}
+@media (max-width:620px){.cards{grid-template-columns:1fr}}
+.card{
+  border:1px solid var(--rule);border-radius:8px;padding:14px 16px;
+  background:rgba(255,255,255,.5);
+}
+.card h4{margin:0 0 4px;font-family:"Fraunces",serif;font-size:16px;font-weight:600}
+.card p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
+
+footer{
+  margin-top:72px;padding-top:22px;border-top:1px solid var(--rule);
+  font-size:13.5px;color:var(--muted);line-height:1.6;
+}
+footer a{color:var(--muted);text-decoration-color:var(--rule)}
+footer .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+.kintro{
+  display:flex;gap:14px;align-items:flex-start;
+  border:1px solid var(--rule);border-radius:10px;
+  padding:16px 18px;margin:18px 0 32px;
+  background:rgba(255,255,255,.55);
+}
+.kintro .glyph{
+  font-family:"Fraunces",serif;font-size:34px;line-height:1;color:var(--accent);
+  font-style:italic;
+}
+.kintro p{margin:0;font-size:15.5px;color:#3d3530;line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+
+<div class="eyebrow"><span class="dot"></span>microprice-sandbox · v0.1</div>
+<h1>The market-maker that<br>knows when it is long.</h1>
+<p class="sub">Reproducing Sasson, Ho &amp; Samson (Stanford MSE448) inside an Islo sandbox — one shell command, two thousand simulated trading sessions, no local Python.</p>
+
+<p class="lede">
+The <a href="https://stanford.edu/class/msande448/2018/Final/Reports/gr1.pdf">2018 MSE448 paper "High Frequency Trading Strategies"</a> compares two limit-order strategies: the Avellaneda–Stoikov optimal market-maker, which steers its quotes around its current inventory, and a symmetric control that always quotes around the mid. Cleanly separating these two strategies needs a clean environment — every parameter sweep, a fresh process, no Jupyter kernel leakage, matplotlib at a known version, no host pollution.
+</p>
+
+<div class="kintro">
+  <span class="glyph">§</span>
+  <p>An Islo sandbox is a Linux microVM you can lease, run a thing inside, and throw away. The reproduction below was computed in one — pip-installed matplotlib, ran the sweep, streamed the PNGs back over stdout. The whole loop takes about 90 seconds and costs less than a coffee.</p>
+</div>
+
+<h2><span class="num">§ 01</span>The one-liner</h2>
+<p>If you have <a href="https://github.com/openclaw/crabbox">crabbox</a> and an Islo API key, the entire reproduction below is:</p>
+
+<div class="copy">
+  <div class="copy-head"><span>terminal</span><button class="copy-btn" data-copy="curl1">copy</button></div>
+<pre id="curl1"><span class="c"># lease an isolated python sandbox, run the sweep, release it</span>
+<span class="y">export</span> ISLO_API_KEY=ak_…
+git clone https://github.com/zozo123/microprice-sandbox &amp;&amp; cd microprice-sandbox
+./scripts/run_in_sandbox.sh        <span class="c"># &lt; 90s end-to-end</span>
+</pre>
+</div>
+
+<p>That script warms an Islo lease, base64-streams <span class="kbd">scripts/sweep.py</span> into the sandbox, <span class="kbd">pip install matplotlib</span>s, runs the sweep, and tar-pipes <span class="kbd">results.json</span> and the PNGs back. The lease is released on <span class="kbd">trap EXIT</span>.</p>
+
+<h2><span class="num">§ 02</span>What the paper says, briefly</h2>
+<p>A market-maker quotes a bid and an ask around what it believes the fair price is, and earns the spread when both sides get hit. Two sources of risk: <em>adverse selection</em> (you keep getting hit only on the losing side) and <em>inventory</em> (you accumulate exposure that can move against you). The mid-price ignores both. The microprice corrects for imbalance and spread. The Avellaneda–Stoikov reservation price corrects for inventory.</p>
+
+<p>For exponential order-arrival intensities <span class="kbd">λ(δ) = A·e<sup>−kδ</sup></span> and GBM mid <span class="kbd">dS = σ·dW</span>, AS derive a closed form:</p>
+
+<div class="eqn">r(s,&nbsp;q,&nbsp;t) = s − q·γ·σ²·(T−t),&nbsp;&nbsp;&nbsp;&nbsp; half-spread = γ·σ²·(T−t) + (2/γ)·ln(1&nbsp;+&nbsp;γ/k)</div>
+
+<p>The reservation price <em>r</em> drifts away from the mid in proportion to how much inventory you are sitting on, in the direction that makes the next trade more likely to flatten you. The control strategy quotes the same half-spread but always around the mid, with no inventory feedback.</p>
+
+<h2><span class="num">§ 03</span>The reproduction</h2>
+<p>Below: P&amp;L distributions across 3,000 episodes per cell, 200 quote-update steps per episode, GBM mid with the parameters in the paper. Computed inside a fresh <span class="kbd">python:3.12-slim</span> Islo sandbox.</p>
+
+<figure>
+  <img src="assets/pnl_hist.png" alt="Two histograms: at γ=0.1 and γ=0.5, AS distribution is visibly narrower than the symmetric control" loading="lazy">
+  <figcaption><span class="fname">assets/pnl_hist.png</span> — episode-level P&amp;L for AS (teal) vs. symmetric control (coral). At both risk-aversions the AS distribution is materially tighter; at γ=0.5 it also sits to the right.</figcaption>
+</figure>
+
+<table>
+  <thead>
+    <tr><th>strategy</th><th>γ</th><th>σ</th><th>mean P&amp;L</th><th>std P&amp;L</th><th>avg q</th><th>std q</th></tr>
+  </thead>
+  <tbody>
+    <tr class="as"><td>AS</td><td>0.10</td><td>2.0</td><td>43.03</td><td>8.07</td><td>−0.03</td><td>2.53</td></tr>
+    <tr class="ctl"><td>control</td><td>0.10</td><td>2.0</td><td>43.21</td><td>10.75</td><td>−0.06</td><td>5.24</td></tr>
+    <tr class="as"><td>AS</td><td>0.50</td><td>2.0</td><td>27.47</td><td>7.14</td><td>−0.02</td><td>1.73</td></tr>
+    <tr class="ctl"><td>control</td><td>0.50</td><td>2.0</td><td>26.35</td><td>8.01</td><td>−0.01</td><td>3.76</td></tr>
+  </tbody>
+</table>
+
+<p>The number to stare at is <span class="kbd">std q</span>: AS halves it. That column is the entire point of the strategy.</p>
+
+<figure>
+  <img src="assets/sweep.png" alt="Two heatmaps over (γ, σ): inventory-stdev reduction ranges from 1.4 to 2.4×; mean P&L delta is mildly negative at low γ and positive at high γ" loading="lazy">
+  <figcaption><span class="fname">assets/sweep.png</span> — left: how much tighter AS keeps inventory than the control, across (γ, σ). Right: the cost or premium in mean dollars. AS pays a small P&amp;L tax at low γ and earns a premium at high γ.</figcaption>
+</figure>
+
+<div class="pullquote">
+  AS is not the "more profitable" strategy. It is the strategy whose profit you can plan around. The control wins some episodes by a lot and loses some by a lot; AS wins narrower and loses narrower. That is what risk aversion buys.
+</div>
+
+<h2><span class="num">§ 04</span>Why an Islo sandbox?</h2>
+<p>Three things are awkward about reproducing quantitative-finance papers locally:</p>
+
+<div class="cards">
+  <div class="card">
+    <h4>State leakage</h4>
+    <p>Jupyter kernels carry hidden state across cells. Notebook-driven results don't reproduce unless you restart the kernel between every parameter, which nobody does.</p>
+  </div>
+  <div class="card">
+    <h4>Toolchain drift</h4>
+    <p>matplotlib 3.7 and 3.10 don't render the same charts. The reproduction belongs to a specific image, not "whatever was on the laptop in 2018".</p>
+  </div>
+  <div class="card">
+    <h4>Host pollution</h4>
+    <p>You shouldn't have to <span class="kbd">pip install matplotlib</span> on the laptop to read a paper. A sandbox is the right granularity: one paper, one sandbox, throw it away.</p>
+  </div>
+  <div class="card">
+    <h4>Parallel parameter sweeps</h4>
+    <p>A 6 × 5 grid is 30 independent runs. Each one in its own sandbox is the natural shape; nothing leaks between cells, and you can fan them out trivially.</p>
+  </div>
+</div>
+
+<h2><span class="num">§ 05</span>Caveats</h2>
+<p>This is a synthetic reproduction. The paper fits σ and the arrival decay κ on real AAPL and CVX L1 data (the absolute numbers in Tables 1 and 2 reflect those fits). I use the paper's structural model — GBM mid, exponential arrival rates — with stylized constants. The qualitative result (AS roughly halves inventory variance and tightens P&amp;L variance) reproduces; the absolute dollar magnitudes do not, and shouldn't be expected to. The microprice section of the paper isn't reproduced here, because it requires a real order book.</p>
+
+<h2><span class="num">§ 06</span>What's in the repo</h2>
+<ul style="padding-left:18px;color:#3d3530">
+  <li><span class="kbd">scripts/demo.py</span> — pure-stdlib AS vs control simulator (no matplotlib needed, prints a table)</li>
+  <li><span class="kbd">scripts/sweep.py</span> — (γ, σ) grid sweep, emits <span class="kbd">results.json</span> + the two PNGs above</li>
+  <li><span class="kbd">scripts/run_in_sandbox.sh</span> — warms an Islo lease, runs the sweep there, tar-pipes artifacts back, releases on exit</li>
+  <li><span class="kbd">assets/results.json</span> — the full numeric output that produced the chart above</li>
+</ul>
+
+<footer>
+<div class="row">
+  <div>
+    <strong>Paper:</strong> Sasson, Ho, Samson — <a href="https://stanford.edu/class/msande448/2018/Final/Reports/gr1.pdf">High Frequency Trading Strategies</a> (Stanford MSE448, 2018).<br>
+    <strong>Source:</strong> <a href="https://github.com/zozo123/microprice-sandbox">github.com/zozo123/microprice-sandbox</a>
+  </div>
+  <div style="text-align:right">
+    Sandboxes by <a href="https://islo.dev">islo.dev</a><br>
+    Brokered by <a href="https://github.com/openclaw/crabbox">crabbox</a>
+  </div>
+</div>
+</footer>
+
+</main>
+
+<script>
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.copy;
+    const text = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      const prev = btn.textContent;
+      btn.textContent = 'copied';
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent = prev; btn.classList.remove('ok'); }, 1400);
+    });
+  });
+});
+</script>
+
+</body>
+</html>
