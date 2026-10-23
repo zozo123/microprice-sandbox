@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="warm" cx="0.12" cy="0.05" r="0.55">
+      <stop offset="0" stop-color="#b14a2a" stop-opacity="0.09"/>
+      <stop offset="1" stop-color="#b14a2a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cool" cx="0.95" cy="0.95" r="0.55">
+      <stop offset="0" stop-color="#1a5670" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#1a5670" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#fbf7ee"/>
+  <rect width="1200" height="630" fill="url(#warm)"/>
+  <rect width="1200" height="630" fill="url(#cool)"/>
+
+  <circle cx="78" cy="82" r="6" fill="#b14a2a"/>
+  <text x="96" y="89" font-family="Menlo, monospace" font-size="19" letter-spacing="3.2" fill="#6a5f55">MICROPRICE-SANDBOX · SYNTHETIC REPRODUCTION</text>
+
+  <text x="70" y="186" font-family="Georgia, serif" font-weight="700" font-size="80" letter-spacing="-1.2" fill="#161311">Avellaneda–Stoikov</text>
+  <text x="70" y="270" font-family="Georgia, serif" font-style="italic" font-size="72" letter-spacing="-1" fill="#b14a2a">in an Islo sandbox</text>
+  <text x="72" y="330" font-family="Georgia, serif" font-style="italic" font-size="27" fill="#6a5f55">vs. a symmetric market-maker, after Sasson, Ho &amp; Samson (Stanford MSE448, 2018)</text>
+
+  <text x="72" y="398" font-family="Menlo, monospace" font-size="17" letter-spacing="1.6" fill="#6a5f55">INVENTORY STD · γ = 0.1, σ = 2 · 3,000 SIMULATED SESSIONS</text>
+
+  <text x="72" y="447" font-family="Menlo, monospace" font-size="20" fill="#161311">AS</text>
+  <rect x="210" y="420" width="345" height="38" rx="4" fill="#1f7b93" fill-opacity="0.85"/>
+  <text x="572" y="447" font-family="Menlo, monospace" font-size="22" font-weight="700" fill="#1f7b93">2.53</text>
+
+  <text x="72" y="503" font-family="Menlo, monospace" font-size="20" fill="#161311">control</text>
+  <rect x="210" y="476" width="714" height="38" rx="4" fill="#e35e46" fill-opacity="0.75"/>
+  <text x="941" y="503" font-family="Menlo, monospace" font-size="22" font-weight="700" fill="#b14a2a">5.24</text>
+
+  <line x1="72" y1="552" x2="1128" y2="552" stroke="#d9cdb7" stroke-width="1.5"/>
+  <text x="72" y="596" font-family="Georgia, serif" font-weight="700" font-size="28" fill="#161311">Yossi Eliaz</text>
+  <text x="1128" y="594" text-anchor="end" font-family="Menlo, monospace" font-size="18" fill="#6a5f55">zozo123.github.io/microprice-sandbox</text>
+</svg>

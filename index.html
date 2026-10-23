@@ -1,12 +1,42 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Avellaneda–Stoikov, in a sandbox · microprice-sandbox</title>
-<meta name="description" content="Reproducing the Sasson–Ho–Samson HFT paper inside a fresh Islo sandbox. The market-maker that knows when it is long.">
-<meta property="og:title" content="Avellaneda–Stoikov, in a sandbox">
-<meta property="og:description" content="The market-maker that knows when it is long. One-liner reproduction of an HFT paper in an ephemeral Linux sandbox.">
+<title>Avellaneda–Stoikov in an Islo sandbox · Yossi Eliaz</title>
+<meta name="description" content="Synthetic reproduction of the Avellaneda–Stoikov vs symmetric market-maker comparison from a 2018 Stanford MSE448 report, run in an Islo sandbox.">
+<meta name="author" content="Yossi Eliaz">
+<link rel="canonical" href="https://zozo123.github.io/microprice-sandbox/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Avellaneda–Stoikov in an Islo sandbox">
+<meta property="og:description" content="Synthetic reproduction of the Avellaneda–Stoikov vs symmetric market-maker comparison from a 2018 Stanford MSE448 report, run in an Islo sandbox.">
+<meta property="og:url" content="https://zozo123.github.io/microprice-sandbox/">
+<meta property="og:image" content="https://zozo123.github.io/microprice-sandbox/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Avellaneda–Stoikov in an Islo sandbox: inventory std 2.53 (AS) vs 5.24 (symmetric control) at γ=0.1, σ=2. Yossi Eliaz.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Avellaneda–Stoikov in an Islo sandbox">
+<meta name="twitter:description" content="Synthetic reproduction of the Avellaneda–Stoikov vs symmetric market-maker comparison from a 2018 Stanford MSE448 report, run in an Islo sandbox.">
+<meta name="twitter:image" content="https://zozo123.github.io/microprice-sandbox/assets/og.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Avellaneda–Stoikov in an Islo sandbox",
+  "description": "Synthetic reproduction of the Avellaneda-Stoikov vs symmetric market-maker comparison from a Stanford MSE448 report, run in an Islo sandbox.",
+  "url": "https://zozo123.github.io/microprice-sandbox/",
+  "image": "https://zozo123.github.io/microprice-sandbox/assets/og.png",
+  "datePublished": "2026-05-25",
+  "isBasedOn": "https://stanford.edu/class/msande448/2018/Final/Reports/gr1.pdf",
+  "author": {
+    "@type": "Person",
+    "name": "Yossi Eliaz",
+    "url": "https://yossieliaz.netlify.app/",
+    "sameAs": ["https://github.com/zozo123", "https://www.linkedin.com/in/yossi-eliaz/"]
+  }
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -48,6 +78,7 @@ h1{
   font-family:"Fraunces",Georgia,serif;
   font-weight:600;font-size:clamp(36px,5vw,52px);line-height:1.05;
   letter-spacing:-.015em;margin:0 0 14px;
+  text-wrap:balance;
 }
 h1 .amp{color:var(--accent);font-style:italic;font-weight:500}
 .sub{
@@ -110,7 +141,8 @@ figure img{display:block;width:100%;height:auto;border-radius:6px;
 figcaption{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.5}
 figcaption .fname{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--accent)}
 
-table{width:100%;border-collapse:collapse;font-size:14.5px;margin:18px 0 28px}
+.table-wrap{overflow-x:auto;margin:18px 0 28px}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin:0}
 th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--rule)}
 th:first-child,td:first-child{text-align:left}
 thead th{
@@ -120,6 +152,12 @@ thead th{
 }
 tbody tr.as td{font-weight:500}
 tbody tr.ctl td{color:var(--muted)}
+thead th.sym{text-transform:none;letter-spacing:0;font-size:13px}
+@media (max-width:480px){
+  table{font-size:13px}
+  th,td{padding:6px 3px}
+  thead th{font-size:10px;letter-spacing:0}
+}
 .delta{color:var(--accent);font-weight:500}
 
 .eqn{font-family:"KaTeX_Main",serif;background:#f4ecd9;padding:10px 14px;
@@ -144,6 +182,9 @@ footer{
 }
 footer a{color:var(--muted);text-decoration-color:var(--rule)}
 footer .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+footer .credits{text-align:right}
+@media (max-width:620px){footer .credits{text-align:left}}
+.repo-list{padding-left:18px;color:#3d3530}
 
 .kintro{
   display:flex;gap:14px;align-items:flex-start;
@@ -162,8 +203,10 @@ footer .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 <main>
 
 <div class="eyebrow"><span class="dot"></span>microprice-sandbox · v0.1</div>
-<h1>The market-maker that<br>knows when it is long.</h1>
-<p class="sub">Reproducing Sasson, Ho &amp; Samson (Stanford MSE448) inside an Islo sandbox — one shell command, two thousand simulated trading sessions, no local Python.</p>
+<h1>The market-maker that knows when it is long.</h1>
+<p class="sub">Reproducing Sasson, Ho &amp; Samson (Stanford MSE448) inside an Islo sandbox — one shell command, 3,000 simulated sessions per parameter cell, no local Python.</p>
+
+<p class="lede">A synthetic reproduction, by <a href="https://zozo123.github.io/">Yossi Eliaz</a>, of the market-making comparison in Sasson, Ho &amp; Samson's 2018 Stanford MSE448 report. Across 3,000 simulated sessions per parameter cell, <strong>Avellaneda–Stoikov quotes roughly halve inventory standard deviation</strong> versus a symmetric control (2.53 vs 5.24 at γ=0.1, σ=2), at a small mean P&amp;L cost at low risk aversion.</p>
 
 <p class="lede">
 The <a href="https://stanford.edu/class/msande448/2018/Final/Reports/gr1.pdf">2018 MSE448 paper "High Frequency Trading Strategies"</a> compares two limit-order strategies: the Avellaneda–Stoikov optimal market-maker, which steers its quotes around its current inventory, and a symmetric control that always quotes around the mid. Cleanly separating these two strategies needs a clean environment — every parameter sweep, a fresh process, no Jupyter kernel leakage, matplotlib at a known version, no host pollution.
@@ -171,14 +214,14 @@ The <a href="https://stanford.edu/class/msande448/2018/Final/Reports/gr1.pdf">20
 
 <div class="kintro">
   <span class="glyph">§</span>
-  <p>An Islo sandbox is a Linux microVM you can lease, run a thing inside, and throw away. The reproduction below was computed in one — pip-installed matplotlib, ran the sweep, streamed the PNGs back over stdout. The whole loop takes about 90 seconds and costs less than a coffee.</p>
+  <p>An Islo sandbox is a Linux microVM you can lease, run a thing inside, and throw away. The reproduction below was computed in one — pip-installed matplotlib, ran the sweep, streamed the PNGs back over stdout. The whole loop took about 90 seconds in my run.</p>
 </div>
 
 <h2><span class="num">§ 01</span>The one-liner</h2>
 <p>If you have <a href="https://github.com/openclaw/crabbox">crabbox</a> and an Islo API key, the entire reproduction below is:</p>
 
 <div class="copy">
-  <div class="copy-head"><span>terminal</span><button class="copy-btn" data-copy="curl1">copy</button></div>
+  <div class="copy-head"><span>terminal</span><button type="button" class="copy-btn" data-copy="curl1">copy</button></div>
 <pre id="curl1"><span class="c"># lease an isolated python sandbox, run the sweep, release it</span>
 <span class="y">export</span> ISLO_API_KEY=ak_…
 git clone https://github.com/zozo123/microprice-sandbox &amp;&amp; cd microprice-sandbox
@@ -198,16 +241,17 @@ git clone https://github.com/zozo123/microprice-sandbox &amp;&amp; cd microprice
 <p>The reservation price <em>r</em> drifts away from the mid in proportion to how much inventory you are sitting on, in the direction that makes the next trade more likely to flatten you. The control strategy quotes the same half-spread but always around the mid, with no inventory feedback.</p>
 
 <h2><span class="num">§ 03</span>The reproduction</h2>
-<p>Below: P&amp;L distributions across 3,000 episodes per cell, 200 quote-update steps per episode, GBM mid with the parameters in the paper. Computed inside a fresh <span class="kbd">python:3.12-slim</span> Islo sandbox.</p>
+<p>Below: P&amp;L distributions across 3,000 episodes per cell, 200 quote-update steps per episode, the paper's structural model (GBM mid, exponential arrivals) with stylized constants — see § 05. Computed inside a fresh <span class="kbd">python:3.12-slim</span> Islo sandbox.</p>
 
 <figure>
   <img src="assets/pnl_hist.png" alt="Two histograms: at γ=0.1 and γ=0.5, AS distribution is visibly narrower than the symmetric control" loading="lazy">
   <figcaption><span class="fname">assets/pnl_hist.png</span> — episode-level P&amp;L for AS (teal) vs. symmetric control (coral). At both risk-aversions the AS distribution is materially tighter; at γ=0.5 it also sits to the right.</figcaption>
 </figure>
 
+<div class="table-wrap">
 <table>
   <thead>
-    <tr><th>strategy</th><th>γ</th><th>σ</th><th>mean P&amp;L</th><th>std P&amp;L</th><th>avg q</th><th>std q</th></tr>
+    <tr><th>strategy</th><th class="sym">γ</th><th class="sym">σ</th><th>mean P&amp;L</th><th>std P&amp;L</th><th>avg q</th><th>std q</th></tr>
   </thead>
   <tbody>
     <tr class="as"><td>AS</td><td>0.10</td><td>2.0</td><td>43.03</td><td>8.07</td><td>−0.03</td><td>2.53</td></tr>
@@ -216,6 +260,7 @@ git clone https://github.com/zozo123/microprice-sandbox &amp;&amp; cd microprice
     <tr class="ctl"><td>control</td><td>0.50</td><td>2.0</td><td>26.35</td><td>8.01</td><td>−0.01</td><td>3.76</td></tr>
   </tbody>
 </table>
+</div>
 
 <p>The number to stare at is <span class="kbd">std q</span>: AS halves it. That column is the entire point of the strategy.</p>
 
@@ -251,10 +296,10 @@ git clone https://github.com/zozo123/microprice-sandbox &amp;&amp; cd microprice
 </div>
 
 <h2><span class="num">§ 05</span>Caveats</h2>
-<p>This is a synthetic reproduction. The paper fits σ and the arrival decay κ on real AAPL and CVX L1 data (the absolute numbers in Tables 1 and 2 reflect those fits). I use the paper's structural model — GBM mid, exponential arrival rates — with stylized constants. The qualitative result (AS roughly halves inventory variance and tightens P&amp;L variance) reproduces; the absolute dollar magnitudes do not, and shouldn't be expected to. The microprice section of the paper isn't reproduced here, because it requires a real order book.</p>
+<p>This is a synthetic reproduction. The paper fits σ and the arrival decay κ on real AAPL and CVX L1 data (the absolute numbers in Tables 1 and 2 reflect those fits). I use the paper's structural model — GBM mid, exponential arrival rates — with stylized constants. The qualitative result (AS roughly halves inventory standard deviation and tightens P&amp;L variance) reproduces; the absolute dollar magnitudes do not, and shouldn't be expected to. The microprice section of the paper isn't reproduced here, because it requires a real order book.</p>
 
 <h2><span class="num">§ 06</span>What's in the repo</h2>
-<ul style="padding-left:18px;color:#3d3530">
+<ul class="repo-list">
   <li><span class="kbd">scripts/demo.py</span> — pure-stdlib AS vs control simulator (no matplotlib needed, prints a table)</li>
   <li><span class="kbd">scripts/sweep.py</span> — (γ, σ) grid sweep, emits <span class="kbd">results.json</span> + the two PNGs above</li>
   <li><span class="kbd">scripts/run_in_sandbox.sh</span> — warms an Islo lease, runs the sweep there, tar-pipes artifacts back, releases on exit</li>
@@ -265,9 +310,10 @@ git clone https://github.com/zozo123/microprice-sandbox &amp;&amp; cd microprice
 <div class="row">
   <div>
     <strong>Paper:</strong> Sasson, Ho, Samson — <a href="https://stanford.edu/class/msande448/2018/Final/Reports/gr1.pdf">High Frequency Trading Strategies</a> (Stanford MSE448, 2018).<br>
-    <strong>Source:</strong> <a href="https://github.com/zozo123/microprice-sandbox">github.com/zozo123/microprice-sandbox</a>
+    <strong>Source:</strong> <a href="https://github.com/zozo123/microprice-sandbox">github.com/zozo123/microprice-sandbox</a><br>
+    <strong>By</strong> <a href="https://zozo123.github.io/">Yossi Eliaz</a> · <a href="https://yossieliaz.netlify.app/">yossieliaz.netlify.app</a>
   </div>
-  <div style="text-align:right">
+  <div class="credits">
     Sandboxes by <a href="https://islo.dev">islo.dev</a><br>
     Brokered by <a href="https://github.com/openclaw/crabbox">crabbox</a>
   </div>

@@ -1,12 +1,14 @@
 # microprice-sandbox
 
-Reproducing **Sasson, Ho & Samson — *High Frequency Trading Strategies*** (Stanford MSE448, 2018) inside a fresh [Islo](https://islo.dev) sandbox.
+A synthetic reproduction of the Avellaneda–Stoikov vs symmetric market-maker comparison in **Sasson, Ho & Samson — *High Frequency Trading Strategies*** (Stanford MSE448 course report, 2018), run inside a fresh [Islo](https://islo.dev) sandbox. A demo by [Yossi Eliaz](https://zozo123.github.io/).
 
-> **Live writeup & charts:** https://zozo123.github.io/microprice-sandbox
+> **Live writeup & charts:** https://zozo123.github.io/microprice-sandbox/
 
-The Avellaneda–Stoikov optimal market-maker steers its quotes around its current inventory; a symmetric control always quotes around the mid. AS roughly **halves inventory variance** and meaningfully **tightens P&L variance** — at the cost of some mean P&L at low risk-aversion and a premium at high risk-aversion.
+The Avellaneda–Stoikov optimal market-maker steers its quotes around its current inventory; a symmetric control always quotes around the mid. AS roughly **halves inventory standard deviation** and meaningfully **tightens P&L variance** — at the cost of some mean P&L at low risk-aversion and a premium at high risk-aversion.
 
 ## Run it
+
+Requires [crabbox](https://github.com/openclaw/crabbox) (an openclaw project) and an Islo API key.
 
 ```sh
 export ISLO_API_KEY=ak_…
@@ -41,7 +43,7 @@ python3 scripts/demo.py
 
 ## Caveats
 
-This is a synthetic reproduction. The paper fits σ and the arrival decay κ on real AAPL and CVX L1 data; the absolute dollar magnitudes in their Tables 1 and 2 reflect those fits. I use the paper's structural model (GBM mid, exponential arrival rates) with stylized constants — the *qualitative* claim (AS halves inventory variance, tightens P&L variance) reproduces; absolute dollars do not, and shouldn't be expected to. The microprice section of the paper isn't reproduced here because it requires a real order book.
+This is a synthetic reproduction. The paper fits σ and the arrival decay κ on real AAPL and CVX L1 data; the absolute dollar magnitudes in their Tables 1 and 2 reflect those fits. I use the paper's structural model (GBM mid, exponential arrival rates) with stylized constants — the *qualitative* claim (AS roughly halves inventory standard deviation, tightens P&L variance) reproduces; absolute dollars do not, and shouldn't be expected to. The microprice section of the paper isn't reproduced here because it requires a real order book.
 
 ## References
 
