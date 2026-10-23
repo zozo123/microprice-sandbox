@@ -8,7 +8,7 @@ The Avellaneda–Stoikov optimal market-maker steers its quotes around its curre
 
 ## Run it
 
-Requires [crabbox](https://github.com/openclaw/crabbox) (an openclaw project) and an Islo API key.
+The sandbox run requires [crabbox](https://github.com/openclaw/crabbox) (an openclaw project) and an Islo API key.
 
 ```sh
 export ISLO_API_KEY=ak_…
